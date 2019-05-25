@@ -4,31 +4,44 @@ mutable struct CrossEntropy{Observation, Policy, Optimizer}
     experiences::Vector{Experience{Observation}}
     episodes::CircularBuffer{Episode{Observation}}
     batch_size::Int
-    percentile::Float64
-    action_space::Int
+    percentile::Float32
+    actions::Int
 end
 
-function CrossEntropy(observation_space::Integer, action_space::Integer)
-    hidden = 128
-    π = Chain(Dense(observation_space, hidden, selu),
-              Dense(hidden, action_space),
-              softmax)
-    optimizer = ADAM(0.01)
-    Observation = Vector{Float64}
+construct_policy(::Type{CrossEntropy},
+                 observations::Box, actions::Discrete, hidden::Integer) =
+    Chain(Dense(size(observations)[1], hidden, selu),
+          Dense(hidden, n(actions)),
+          softmax)
+
+construct_policy(::Type{CrossEntropy},
+                 observations::Discrete, actions::Discrete, hidden::Integer) =
+    Chain(Dense(n(observations), hidden, selu),
+          Dense(hidden, n(actions)),
+          softmax)
+
+observation_type(::Box) = Vector{Float32}
+observation_type(::Discrete) = OneHotVector
+
+function CrossEntropy(env::Environment;
+                      η=0.01, batch_size=16, percentile=0.7, hidden=128)
+    observations = observation_space(env)
+    actions = action_space(env)
+    π = construct_policy(CrossEntropy, observations, actions, hidden)
+    optimizer = ADAM(η)
+    Observation = observation_type(observations)
     Policy = typeof(π)
     Optimizer = typeof(optimizer)
     experiences = Experience{Observation}[]
-    batch_size = 16
     episodes = CircularBuffer{Episode{Observation}}(batch_size)
-    percentile = 0.7
     CrossEntropy{Observation, Policy, Optimizer}(
         π, optimizer, experiences, episodes, batch_size,
-        percentile, action_space)
+        Float32(percentile), n(actions))
 end
 
 select_action!(agent::CrossEntropy{Observation},
                observation::Observation) where Observation =
-    rand(Categorical(agent.π(observation)))
+    Int32(rand(Categorical(agent.π(observation))))
 
 function improve!(agent::CrossEntropy{Observation}) where Observation
     length(agent.episodes) < agent.batch_size && return nothing
@@ -40,7 +53,7 @@ function improve!(agent::CrossEntropy{Observation}) where Observation
         if episode.reward >= reward_bound
             for experience ∈ episode.experiences
                 push!(observations, experience.observation)
-                push!(actions, onehot(experience.action, 1:agent.action_space))
+                push!(actions, onehot(experience.action, 1:agent.actions))
             end
         end
     end

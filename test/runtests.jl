@@ -1,11 +1,12 @@
 include("../src/Agents.jl")
 
-env = Agents.gym.make("CartPole-v0")
+env = Agents.Environment("CartPole-v0")
+env = Agents.Environment("FrozenLake-v0")
 
-agent = Agents.CrossEntropy(4, 2)
+agent = Agents.CrossEntropy(env)
 
-Agents.simulate!(agent, env; episodes=100, graph=true)
+Agents.simulate!(agent, env; episodes=100, graph_rewards=true)
 
-Agents.simulate!(agent, env; episodes=5, render=true)
+Agents.simulate!(agent, env; episodes=5, render_environment=true)
 
-env.close()
+close(env)
