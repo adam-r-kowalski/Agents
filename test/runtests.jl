@@ -9,5 +9,4 @@ agent = Agents.DQN(env)
 Agents.simulate!(agent, env; episodes=100, graph_rewards=true)
 Agents.simulate!(agent, env; episodes=5, render_environment=true)
 
-
 close(env)

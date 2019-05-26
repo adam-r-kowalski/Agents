@@ -20,16 +20,13 @@ construct_policy(::Type{CrossEntropy},
           Dense(hidden, n(actions)),
           softmax)
 
-observation_type(::Box) = Vector{Float32}
-observation_type(::Discrete) = OneHotVector
-
 function CrossEntropy(env::Environment;
                       η=0.01, batch_size=16, percentile=0.7, hidden=128)
     observations = observation_space(env)
     actions = action_space(env)
     π = construct_policy(CrossEntropy, observations, actions, hidden)
     optimizer = ADAM(η)
-    Observation = observation_type(observations)
+    Observation = typeof(reset(env))
     Policy = typeof(π)
     Optimizer = typeof(optimizer)
     transitions = Transition{Observation}[]
