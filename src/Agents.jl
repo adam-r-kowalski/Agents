@@ -1,10 +1,10 @@
 module Agents
 
 using PyCall, Flux, Distributions, DataStructures, Statistics, Plots, Juno
-using Flux: OneHotVector, onehot, crossentropy, params
+using Flux: OneHotVector, onehot, mse, crossentropy, params, data
 using Flux.Tracker: gradient, update!
 
-struct Experience{Observation}
+struct Transition{Observation}
     observation::Observation
     action::Int32
     reward::Float32
@@ -13,12 +13,13 @@ struct Experience{Observation}
 end
 
 struct Episode{Observation}
-    experiences::Vector{Experience{Observation}}
+    transitions::Vector{Transition{Observation}}
     reward::Float32
 end
 
 include("gym.jl")
 include("cross_entropy.jl")
+include("dqn.jl")
 
 function simulate!(agent, env;
                    episodes=1, graph_rewards=false, render_environment=false)
@@ -30,9 +31,9 @@ function simulate!(agent, env;
         while !done
             action = select_action!(agent, observation)
             next_observation, reward, done = step(env, action)
-            experience = Experience(
+            transition = Transition(
                 observation, action, reward, next_observation, done)
-            remember!(agent, experience)
+            remember!(agent, transition)
             episode_reward += reward
             observation = next_observation
             render_environment && render(env)

@@ -1,7 +1,7 @@
 mutable struct CrossEntropy{Observation, Policy, Optimizer}
     π::Policy
     optimizer::Optimizer
-    experiences::Vector{Experience{Observation}}
+    transitions::Vector{Transition{Observation}}
     episodes::CircularBuffer{Episode{Observation}}
     batch_size::Int
     percentile::Float32
@@ -32,10 +32,10 @@ function CrossEntropy(env::Environment;
     Observation = observation_type(observations)
     Policy = typeof(π)
     Optimizer = typeof(optimizer)
-    experiences = Experience{Observation}[]
+    transitions = Transition{Observation}[]
     episodes = CircularBuffer{Episode{Observation}}(batch_size)
     CrossEntropy{Observation, Policy, Optimizer}(
-        π, optimizer, experiences, episodes, batch_size,
+        π, optimizer, transitions, episodes, batch_size,
         Float32(percentile), n(actions))
 end
 
@@ -51,9 +51,9 @@ function improve!(agent::CrossEntropy{Observation}) where Observation
     actions = OneHotVector[]
     for episode ∈ agent.episodes
         if episode.reward >= reward_bound
-            for experience ∈ episode.experiences
-                push!(observations, experience.observation)
-                push!(actions, onehot(experience.action, 1:agent.actions))
+            for transition ∈ episode.transitions
+                push!(observations, transition.observation)
+                push!(actions, onehot(transition.action, 1:agent.actions))
             end
         end
     end
@@ -65,13 +65,13 @@ function improve!(agent::CrossEntropy{Observation}) where Observation
 end
 
 function remember!(agent::CrossEntropy{Observation},
-                   experience::Experience{Observation}) where Observation
-    push!(agent.experiences, experience)
-    if experience.done
-        experiences = agent.experiences
-        reward = sum(experience.reward for experience ∈ experiences)
-        push!(agent.episodes, Episode(experiences, reward))
-        agent.experiences = []
+                   transition::Transition{Observation}) where Observation
+    push!(agent.transitions, transition)
+    if transition.done
+        transitions = agent.transitions
+        reward = sum(transition.reward for transition ∈ transitions)
+        push!(agent.episodes, Episode(transitions, reward))
+        agent.transitions = []
         improve!(agent)
     end
 end
