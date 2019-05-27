@@ -1,12 +1,13 @@
-include("../src/Agents.jl")
+module AgentsTest
 
-env = Agents.Environment("CartPole-v0")
-env = Agents.Environment("LunarLander-v2")
+using Agents, Flux, Test
+using Flux: OneHotVector
 
-agent = Agents.CrossEntropy(env)
-agent = Agents.DQN(env)
+@testset "Agents" begin
 
-Agents.simulate!(agent, env; episodes=100, graph_rewards=true)
-Agents.simulate!(agent, env; episodes=5, render_environment=true)
+include("gym.jl")
+include("networks.jl")
 
-close(env)
+end
+
+end

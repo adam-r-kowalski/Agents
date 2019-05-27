@@ -1,3 +1,5 @@
+export gym, Box, Discrete, Environment, observation_space, action_space
+
 const gym = PyNULL()
 
 struct Box{Rank}
@@ -39,8 +41,6 @@ function Discrete(p::PyObject)
     Discrete(p.n)
 end
 
-n(discrete::Discrete) = discrete.n
-
 
 function ObservationSpace(p::PyObject)
     obs = p.observation_space
@@ -63,13 +63,12 @@ function Environment(name::AbstractString)
     Environment(p, ObservationSpace(p), ActionSpace(p))
 end
 
-onehot_discrete(i::Integer, discrete::Discrete) =
-    onehot(i + 1, 1:n(discrete))
+onehot_discrete(i::Integer, discrete::Discrete) = onehot(i, 1:n(discrete))
 
 Base.reset(env::Environment{<:Box}) = Float32.(env.p.reset())
 
 Base.reset(env::Environment{Discrete}) =
-    onehot_discrete(convert(Int, env.p.reset()), observation_space(env))
+    onehot_discrete(env.p.reset() + 1, observation_space(env))
 
 function Base.step(env::Environment{<:Box, Discrete}, action::Integer)
     observation, reward, done, _ = env.p.step(action - 1)
@@ -78,7 +77,7 @@ end
 
 function Base.step(env::Environment{Discrete, Discrete}, action::Integer)
     observation, reward, done, _ = env.p.step(action - 1)
-    encoded = onehot_discrete(observation, observation_space(env))
+    encoded = onehot_discrete(observation + 1, observation_space(env))
     encoded, Float32(reward), Bool(done)
 end
 

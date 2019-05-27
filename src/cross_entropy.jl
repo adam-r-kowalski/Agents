@@ -8,23 +8,12 @@ mutable struct CrossEntropy{Observation, Policy, Optimizer}
     actions::Int
 end
 
-construct_policy(::Type{CrossEntropy},
-                 observations::Box, actions::Discrete, hidden::Integer) =
-    Chain(Dense(size(observations)[1], hidden, selu),
-          Dense(hidden, n(actions)),
-          softmax)
-
-construct_policy(::Type{CrossEntropy},
-                 observations::Discrete, actions::Discrete, hidden::Integer) =
-    Chain(Dense(n(observations), hidden, selu),
-          Dense(hidden, n(actions)),
-          softmax)
-
 function CrossEntropy(env::Environment;
-                      η=0.01, batch_size=16, percentile=0.7, hidden=128)
+                      η=0.01, batch_size=16, percentile=0.7,
+                      construct_π=construct_π)
     observations = observation_space(env)
     actions = action_space(env)
-    π = construct_policy(CrossEntropy, observations, actions, hidden)
+    π = construct_π(observations, actions)
     optimizer = ADAM(η)
     Observation = typeof(reset(env))
     Policy = typeof(π)
@@ -33,7 +22,7 @@ function CrossEntropy(env::Environment;
     episodes = CircularBuffer{Episode{Observation}}(batch_size)
     CrossEntropy{Observation, Policy, Optimizer}(
         π, optimizer, transitions, episodes, batch_size,
-        Float32(percentile), n(actions))
+        Float32(percentile), actions.n)
 end
 
 select_action!(agent::CrossEntropy{Observation},

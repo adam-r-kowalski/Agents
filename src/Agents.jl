@@ -18,6 +18,7 @@ struct Episode{Observation}
 end
 
 include("gym.jl")
+include("networks.jl")
 include("cross_entropy.jl")
 include("dqn.jl")
 

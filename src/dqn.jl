@@ -12,22 +12,12 @@ mutable struct DQN{Observation, Quality, Optimizer}
     iterations::Int
 end
 
-construct_Q(::Type{DQN},
-            observations::Box, actions::Discrete, hidden::Integer) =
-    Chain(Dense(size(observations)[1], hidden, selu),
-          Dense(hidden, n(actions)))
-
-construct_Q(::Type{DQN},
-            observations::Discrete, actions::Discrete, hidden::Integer) =
-    Chain(Dense(n(observations), hidden, selu),
-          Dense(hidden, n(actions)))
-
 function DQN(env::Environment;
-             η=0.01, minibatch_size=32, hidden=128, capacity=10_000,
-             ε_decay=0.999, γ=0.9, sync_every=1000)
-    observations = observation_space(env)
+             η=0.01, minibatch_size=32, capacity=10_000,
+             ε_decay=0.999, γ=0.9, sync_every=1000,
+             construct_Q=construct_Q)
     actions = action_space(env)
-    Q = construct_Q(DQN, observations, actions, hidden)
+    Q = construct_Q(observation_space(env), actions)
     Q̂ = deepcopy(Q)
     optimizer = ADAM(η)
     Observation = typeof(reset(env))
@@ -38,7 +28,7 @@ function DQN(env::Environment;
     iterations = 0
     DQN{Observation, Quality, Optimizer}(
         Q, Q̂, optimizer, replay_buffer, Int32(minibatch_size),
-        ε, Float32(ε_decay), Float32(γ), n(actions),
+        ε, Float32(ε_decay), Float32(γ), actions.n,
         sync_every, iterations)
 end
 
@@ -71,8 +61,6 @@ function improve!(agent::DQN{Observation}) where Observation
     θ = params(agent.Q)
     Δ = gradient(() -> mse(ŷ, y), θ)
     update!(agent.optimizer, θ, Δ)
-    agent.ε *= agent.ε_decay
-    agent.iterations % agent.sync_every == 0 && (agent.Q̂ = deepcopy(agent.Q))
 end
 
 
@@ -81,4 +69,6 @@ function remember!(agent::DQN{Observation},
     push!(agent.replay_buffer, transition)
     improve!(agent)
     agent.iterations += 1
+    agent.ε *= agent.ε_decay
+    agent.iterations % agent.sync_every == 0 && (agent.Q̂ = deepcopy(agent.Q))
 end
