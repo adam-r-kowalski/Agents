@@ -1,3 +1,5 @@
+export CrossEntropy
+
 mutable struct CrossEntropy{Observation, Policy, Optimizer}
     π::Policy
     optimizer::Optimizer
@@ -9,12 +11,11 @@ mutable struct CrossEntropy{Observation, Policy, Optimizer}
 end
 
 function CrossEntropy(env::Environment;
-                      η=0.01, batch_size=16, percentile=0.7,
+                      optimizer=ADAM(0.01), batch_size=16, percentile=0.7,
                       construct_π=construct_π)
     observations = observation_space(env)
     actions = action_space(env)
     π = construct_π(observations, actions)
-    optimizer = ADAM(η)
     Observation = typeof(reset(env))
     Policy = typeof(π)
     Optimizer = typeof(optimizer)
