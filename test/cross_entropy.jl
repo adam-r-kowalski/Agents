@@ -43,7 +43,7 @@ end
     @test agent.percentile ≈ 0.5
 end
 
-@testset "cross entropy agent can have custom policy constructor" begin
+@testset "cross entropy agent can have custom π constructor" begin
     env = Environment("CartPole-v0")
 
     custom_π(observation_space::Box{1}, action_space::Discrete) =
@@ -52,6 +52,93 @@ end
     agent = CrossEntropy(env, construct_π=custom_π)
     @test size(agent.π.W, 2) == 4
     @test size(agent.π.W, 1) == 2
+end
+
+@testset "cross entropy agent can take an action in the environment" begin
+    env = Environment("CartPole-v0")
+    agent = CrossEntropy(env)
+    observation = reset(env)
+    action = select_action!(agent, observation)
+    @test action ∈ 1:action_space(env).n
+end
+
+@testset "cross entropy agent can remember transitions" begin
+    env = Environment("CartPole-v0")
+    agent = CrossEntropy(env)
+    @test length(agent.transitions) == 0
+    observation = reset(env)
+    action = select_action!(agent, observation)
+    next_observation, reward, done = step(env, action)
+    transition = Transition(observation, action, reward, next_observation, done)
+    remember!(agent, transition)
+    @test length(agent.transitions) == 1
+end
+
+@testset "cross entropy agent stores transitions" begin
+    env = Environment("CartPole-v0")
+    agent = CrossEntropy(env)
+    @test length(agent.transitions) == 0
+    @test length(agent.episodes) == 0
+    done = false
+    observation = reset(env)
+    transitions = agent.transitions
+    for i ∈ 1:200
+        action = select_action!(agent, observation)
+        next_observation, reward, done = step(env, action)
+        transition = Transition(
+            observation, action, reward, next_observation, done)
+        remember!(agent, transition)
+        observation = next_observation
+        if done
+            @test length(agent.transitions) == 0
+            @test length(agent.episodes) == 1
+            @test agent.episodes[1].transitions == transitions
+            break
+        else
+            @test length(agent.transitions) == i
+        end
+    end
+end
+
+@testset "cross entropy agent improves" begin
+    env = Environment("CartPole-v0")
+    agent = CrossEntropy(env)
+    π = deepcopy(agent.π)
+    function same_weights(π1, π2)
+        b1 = π1[1].W.data ≈ π2[1].W.data
+        b2 = π1[1].b.data ≈ π2[1].b.data
+        b3 = π1[2].W.data ≈ π2[2].W.data
+        b4 = π1[2].b.data ≈ π2[2].b.data
+        b1 && b2 && b3 && b4
+    end
+    @test same_weights(π, agent.π)
+    @test length(agent.episodes) == 0
+    for i ∈ 1:agent.batch_size-1
+        done = false
+        observation = reset(env)
+        while !done
+            action = select_action!(agent, observation)
+            next_observation, reward, done = step(env, action)
+            transition = Transition(
+                observation, action, reward, next_observation, done)
+            remember!(agent, transition)
+            observation = next_observation
+        end
+        @test length(agent.episodes) == i
+        @test same_weights(π, agent.π)
+    end
+    done = false
+    observation = reset(env)
+    while !done
+        action = select_action!(agent, observation)
+        next_observation, reward, done = step(env, action)
+        transition = Transition(
+            observation, action, reward, next_observation, done)
+        remember!(agent, transition)
+        observation = next_observation
+    end
+    @test length(agent.episodes) == agent.batch_size
+    @test !same_weights(π, agent.π)
 end
 
 end

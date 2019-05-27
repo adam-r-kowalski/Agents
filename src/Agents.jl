@@ -1,5 +1,7 @@
 module Agents
 
+export Transition
+
 using PyCall, Flux, Distributions, DataStructures, Statistics, Plots, Juno
 using Flux: OneHotVector, onehot, mse, crossentropy, params, data
 using Flux.Tracker: gradient, update!

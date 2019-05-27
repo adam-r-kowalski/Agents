@@ -1,4 +1,4 @@
-export CrossEntropy
+export CrossEntropy, select_action!, remember!
 
 mutable struct CrossEntropy{Observation, Policy, Optimizer}
     π::Policy
