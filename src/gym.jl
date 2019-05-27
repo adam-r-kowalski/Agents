@@ -63,7 +63,7 @@ function Environment(name::AbstractString)
     Environment(p, ObservationSpace(p), ActionSpace(p))
 end
 
-onehot_discrete(i::Integer, discrete::Discrete) = onehot(i, 1:n(discrete))
+onehot_discrete(i::Integer, discrete::Discrete) = onehot(i, 1:discrete.n)
 
 Base.reset(env::Environment{<:Box}) = Float32.(env.p.reset())
 

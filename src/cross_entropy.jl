@@ -30,8 +30,7 @@ select_action!(agent::CrossEntropy{Observation},
                observation::Observation) where Observation =
     Int32(rand(Categorical(agent.π(observation))))
 
-function improve!(agent::CrossEntropy{Observation}) where Observation
-    length(agent.episodes) < agent.batch_size && return nothing
+function training_data(agent::CrossEntropy{Observation}) where Observation
     rewards = [episode.reward for episode ∈ agent.episodes]
     reward_bound = quantile(rewards, agent.percentile)
     observations = Observation[]
@@ -44,10 +43,16 @@ function improve!(agent::CrossEntropy{Observation}) where Observation
             end
         end
     end
-    ŷ = agent.π(reduce(hcat, observations))
-    y = reduce(hcat, actions)
+    reduce(hcat, observations), reduce(hcat, actions)
+end
+
+function improve!(agent::CrossEntropy)
+    length(agent.episodes) < agent.batch_size && return nothing
+    observations, actions = training_data(agent)
     θ = params(agent.π)
-    Δ = gradient(() -> crossentropy(ŷ, y), θ)
+    Δ = gradient(θ) do
+        crossentropy(agent.π(observations), actions)
+    end
     update!(agent.optimizer, θ, Δ)
 end
 

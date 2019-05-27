@@ -141,4 +141,25 @@ end
     @test !same_weights(π, agent.π)
 end
 
+@testset "cross entropy agent samples best episodes" begin
+    env = Environment("CartPole-v0")
+    agent = CrossEntropy(env, batch_size=10)
+    transition = Transition(rand(Float32, 4), Int32(1), 1f0, rand(Float32, 4), false)
+    short_episode = Agents.Episode([transition for _ in 1:10], 10f0)
+    long_episode = Agents.Episode([transition for _ in 1:20], 20f0)
+    foreach(_ -> push!(agent.episodes, short_episode), 1:7)
+    foreach(_ -> push!(agent.episodes, long_episode), 1:3)
+    observations, actions = Agents.training_data(agent)
+    best_observations = reduce(
+        hcat, repeat([t.observation for t ∈ long_episode.transitions], 3))
+    best_actions = reduce(
+        hcat, repeat([onehot(t.action, 1:agent.actions)
+                      for t ∈ long_episode.transitions], 3))
+    @test observations == best_observations
+    @test actions == best_actions
+end
+
+end
+
+
 end

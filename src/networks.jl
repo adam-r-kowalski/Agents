@@ -6,7 +6,7 @@ construct_π(observation_space::Box{1}, action_space::Discrete) =
           softmax)
 
 construct_π(observation_space::Discrete, action_space::Discrete) =
-    Chain(Dense(n(observation_space), 128, selu),
+    Chain(Dense(observation_space.n, 128, selu),
           Dense(128, action_space.n),
           softmax)
 
@@ -15,5 +15,5 @@ construct_Q(observation_space::Box{1}, action_space::Discrete) =
           Dense(128, action_space.n))
 
 construct_Q(observation_space::Discrete, action_space::Discrete) =
-    Chain(Dense(n(observation_space), 128, selu),
+    Chain(Dense(observation_space.n, 128, selu),
           Dense(128, action_space.n))

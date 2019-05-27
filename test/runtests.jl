@@ -1,7 +1,7 @@
 module AgentsTest
 
 using Agents, Flux, DataStructures, Test
-using Flux: OneHotVector
+using Flux: OneHotVector, onehot
 
 @testset "Agents" begin
 
