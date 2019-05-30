@@ -1,5 +1,3 @@
-export DQN
-
 mutable struct DQN{Observation, Quality, Optimizer}
     Q::Quality
     Q̂::Quality

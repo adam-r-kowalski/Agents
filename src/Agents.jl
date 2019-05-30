@@ -1,10 +1,10 @@
 module Agents
 
-export Transition
+export Transition, DQN, CrossEntropy, select_action!, remember!
 
 using PyCall, Flux, Distributions, DataStructures, Statistics, Plots, Juno
 using Flux: OneHotVector, onehot, mse, crossentropy, params, data
-using Flux.Tracker: gradient, update!
+using Flux.Tracker: gradient, update!, TrackedReal
 
 struct Transition{Observation}
     observation::Observation
@@ -23,6 +23,7 @@ include("gym.jl")
 include("networks.jl")
 include("cross_entropy.jl")
 include("dqn.jl")
+include("policy_gradient.jl")
 
 function simulate!(agent, env;
                    episodes=1, graph_rewards=false, render_environment=false)
