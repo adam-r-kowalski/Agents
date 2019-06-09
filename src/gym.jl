@@ -1,6 +1,4 @@
-export gym, Box, Discrete, Environment, observation_space, action_space
-
-const gym = PyNULL()
+const gym = pyimport("gym")
 
 struct Box{Rank}
     low::Array{Float32, Rank}
@@ -49,7 +47,12 @@ function ObservationSpace(p::PyObject)
     obs_type == gym.spaces.Box && return Box(obs)
 end
 
-ActionSpace(p::PyObject) = Discrete(p.action_space)
+function ActionSpace(p::PyObject)
+    as = p.action_space
+    as_type = pytypeof(as)
+    as_type == gym.spaces.Discrete && return Discrete(as)
+    as_type == gym.spaces.Box && return Box(as)
+end
 
 
 struct Environment{ObservationSpace, ActionSpace}
@@ -88,5 +91,3 @@ render(env::Environment) = env.p.render()
 observation_space(env::Environment) = env.observation_space
 
 action_space(env::Environment) = env.action_space
-
-__init__() = copy!(gym, pyimport("gym"))

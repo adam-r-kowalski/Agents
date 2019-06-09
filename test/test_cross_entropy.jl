@@ -7,7 +7,7 @@
     @test size(agent.π[1].W, 2) == size(observation_space(env))[1]
     @test size(agent.π[2].W, 1) == actions
     @test agent.optimizer isa ADAM
-    @test agent.transitions isa Vector{<:Agents.Transition}
+    @test agent.transitions isa Vector{<:Transition}
     @test length(agent.transitions) == 0
     @test agent.episodes isa CircularBuffer{<:Agents.Episode}
     @test length(agent.episodes) == 0
@@ -144,7 +144,8 @@ end
 @testset "cross entropy agent samples best episodes" begin
     env = Environment("CartPole-v0")
     agent = CrossEntropy(env, batch_size=10)
-    transition = Transition(rand(Float32, 4), Int32(1), 1f0, rand(Float32, 4), false)
+    transition = Transition(
+        rand(Float32, 4), Int32(1), 1f0, rand(Float32, 4), false)
     short_episode = Agents.Episode([transition for _ in 1:10], 10f0)
     long_episode = Agents.Episode([transition for _ in 1:20], 20f0)
     foreach(_ -> push!(agent.episodes, short_episode), 1:7)

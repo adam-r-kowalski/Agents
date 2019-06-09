@@ -15,7 +15,7 @@
     @test size(agent.Q[2].W, 1) == actions
     @test same_weights(agent.Q, agent.Q̂)
     @test agent.optimizer isa ADAM
-    @test agent.replay_buffer isa CircularBuffer{<:Agents.Transition}
+    @test agent.replay_buffer isa CircularBuffer{<:Transition}
     @test length(agent.replay_buffer) == 0
     @test agent.batch_size == 32
     @test agent.ε ≈ 1.0

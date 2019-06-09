@@ -1,10 +1,13 @@
 module Agents
 
-export Transition, DQN, CrossEntropy, select_action!, remember!
+export Transition, DQN, CrossEntropy, Odin, select_action!, remember!,
+       Box, Discrete, Environment, observation_space, action_space,
+       simulate!
 
-using PyCall, Flux, Distributions, DataStructures, Statistics, Plots, Juno
+using PyCall, Flux, Distributions, DataStructures, Statistics,
+      Plots, Juno, CuArrays
 using Flux: OneHotVector, onehot, mse, crossentropy, params, data
-using Flux.Tracker: gradient, update!, TrackedReal
+using Flux.Tracker: gradient, update!, TrackedReal, TrackedVector
 
 struct Transition{Observation}
     observation::Observation
@@ -19,6 +22,7 @@ struct Episode{Observation}
     reward::Float32
 end
 
+include("util.jl")
 include("gym.jl")
 include("networks.jl")
 include("cross_entropy.jl")

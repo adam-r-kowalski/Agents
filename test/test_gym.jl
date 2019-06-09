@@ -8,7 +8,7 @@
 end
 
 @testset "construct a box using low and high from python" begin
-    box = Box(gym.spaces.Box([-1, -2], [1, 2]))
+    box = Box(Agents.gym.spaces.Box([-1, -2], [1, 2]))
     @test box.low == [-1, -2]
     @test box.high == [1, 2]
     @test size(box) == (2,)
@@ -26,7 +26,7 @@ end
 end
 
 @testset "construct a box using low, high, and shape from python" begin
-    box = Box(gym.spaces.Box(-1, 1, (3, 2)))
+    box = Box(Agents.gym.spaces.Box(-1, 1, (3, 2)))
     @test box.low == fill(-1, (3, 2))
     @test box.high == fill(1, (3, 2))
     @test size(box) == (3, 2)
@@ -42,19 +42,19 @@ end
 end
 
 @testset "construct a discrete from python" begin
-    discrete = Discrete(gym.spaces.Discrete(5))
+    discrete = Discrete(Agents.gym.spaces.Discrete(5))
     @test discrete.n == 5
 end
 
 @testset "get observation space from python gym env" begin
-    env = gym.make("CartPole-v0")
+    env = Agents.gym.make("CartPole-v0")
     @test Agents.ObservationSpace(env) isa Box{1}
-    env = gym.make("FrozenLake-v0")
+    env = Agents.gym.make("FrozenLake-v0")
     @test Agents.ObservationSpace(env) isa Discrete
 end
 
 @testset "get action space from python gym env" begin
-    env = gym.make("CartPole-v0")
+    env = Agents.gym.make("CartPole-v0")
     @test Agents.ActionSpace(env) isa Discrete
 end
 
